@@ -72,6 +72,7 @@
       margin-top: 2rem;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -91,6 +92,8 @@
         const data = await res.json();
 
         container.innerHTML = ''; // Clear loading text
+
+        let legendTriggered = false;
 
         data.forEach((row, index) => {
           const tier = row['🏆 Tier'] || row['🎖 Tier'] || '';
@@ -113,6 +116,15 @@
             <span class="badge ${badgeClass}">${tier}</span>
           `;
           container.appendChild(card);
+
+          if (!legendTriggered && tier.includes('LEGEND')) {
+            legendTriggered = true;
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+            });
+          }
         });
 
         const now = new Date();
@@ -123,7 +135,9 @@
       }
     }
 
+    // Load leaderboard initially and auto-refresh every 60 seconds
     loadLeaderboard();
+    setInterval(loadLeaderboard, 60000);
   </script>
 
 </body>
