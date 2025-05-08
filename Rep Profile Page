@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rep Profile</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+    }
+    .profile-card {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+    .badge {
+      padding: 0.3rem 0.7rem;
+      border-radius: 1rem;
+      color: white;
+      font-weight: bold;
+    }
+    .legend { background: #f3c13a; }
+    .pro { background: #3f87f5; }
+    .rising { background: #45b36b; }
+    .stats {
+      margin-top: 1rem;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    table {
+      width: 100%;
+      margin-top: 2rem;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+
+<div class="profile-card">
+  <h1 id="rep-name">Loading...</h1>
+  <span id="tier-badge" class="badge"></span>
+  <div class="stats" id="rep-stats"></div>
+  <table id="deals-table">
+    <thead>
+      <tr><th>Date</th><th>Deal Type</th><th>Commission</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  async function loadRepProfile() {
+    const params = new URLSearchParams(window.location.search);
+    const repName = params.get("rep");
+    if (!repName) {
+      document.getElementById("rep-name").textContent = "No rep specified.";
+      return;
+    }
+
+    const res = await fetch("https://opensheet.elk.sh/10E7jb6myCWLWcegQiyhNutyzGaSxzINSi5X1txCeLYo/Leaderboard");
+    const data = await res.json();
+
+    const filtered = data.filter(row => {
+      const name = row['🧑 Rep Name'] || row['👨‍💼 Rep Name'] || '';
+      return name.trim().toLowerCase() === repName.trim().toLowerCase();
+    });
+
+    if (!filtered.length) {
+      document.getElementById("rep-name").textContent = "Rep not found.";
+      return;
+    }
+
+    const rep = filtered[0];
+    const badge = rep['🎖 Tier'] || "";
+    const badgeClass = badge.includes("LEGEND") ? "legend" : badge.includes("PRO") ? "pro" : "rising";
+
+    document.getElementById("rep-name").textContent = rep['🧑 Rep Name'];
+    const badgeEl = document.getElementById("tier-badge");
+    badgeEl.textContent = badge;
+    badgeEl.classList.add(badgeClass);
+
+    document.getElementById("rep-stats").innerHTML = `
+      <strong>Total Deals:</strong> ${rep['📦 Deals']}<br>
+      <strong>Net Commission:</strong> ${rep['🟢 Net Commission'] || '$0'}
+    `;
+
+    const tbody = document.querySelector("#deals-table tbody");
+    filtered.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row['🗓 Date'] || ''}</td>
+        <td>${row['Deal Type'] || ''}</td>
+        <td>${row['🟢 Net Commission'] || '$0'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  loadRepProfile();
+</script>
+
+</body>
+</html>
