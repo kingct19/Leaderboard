@@ -2,8 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mobile Leaderboard</title>
   <style>
     body {
@@ -73,19 +73,16 @@
         const res = await fetch(proxyUrl);
         const data = await res.json();
 
-        console.log('Loaded data:', data);
         container.innerHTML = ''; // Clear loading text
 
         data.forEach((row, index) => {
-          console.log('Row:', row);
-
           const tier = row['🏆 Tier'] || row['🎖 Tier'] || '';
           const badgeClass = tier.includes('LEGEND') ? 'legend' :
                              tier.includes('PRO') ? 'pro' : 'rising';
           const rankEmoji = row['🏆 Rank'] || `#${index + 1}`;
           const name = row['🧑 Rep Name'] || row['👨‍💼 Rep Name'] || 'Unnamed';
           const deals = row['📦 Deals'] || '0';
-          const net = row['💰 Net Commission'] || row['Net Commission'] || '$0';
+          const net = row['🟢 Net Commission'] || row['Net Commission'] || '$0';
 
           const card = `
             <div class="rep-card">
@@ -110,3 +107,4 @@
 
 </body>
 </html>
+
