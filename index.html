@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mobile Leaderboard</title>
   <style>
     body {
@@ -82,7 +82,11 @@
           const rankEmoji = row['🏆 Rank'] || `#${index + 1}`;
           const name = row['🧑 Rep Name'] || row['👨‍💼 Rep Name'] || 'Unnamed';
           const deals = row['📦 Deals'] || '0';
-          const net = row['🟢 Net Commission'] || row['Net Commission'] || '$0';
+
+          // Dynamically find key containing "net commission"
+          const keys = Object.keys(row);
+          const netKey = keys.find(k => k.toLowerCase().includes('net commission'));
+          const net = netKey ? row[netKey] : '$0';
 
           const card = `
             <div class="rep-card">
@@ -107,4 +111,3 @@
 
 </body>
 </html>
-
