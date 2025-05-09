@@ -1,144 +1,182 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mobile Leaderboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Leaderboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+      background: #f3f4f6;
+      padding: 2rem;
       margin: 0;
-      padding: 1rem;
-      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      color: #111827;
+      margin-bottom: 0.5rem;
     }
     .leaderboard {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      display: grid;
+      max-width: 900px;
+      margin: auto;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
     }
     .rep-card {
       background: #ffffff;
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-      word-wrap: break-word;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+      transform: translateY(20px);
       opacity: 0;
-      animation: fadeSlideUp 0.6s ease forwards;
+      animation: fadeInUp 0.6s ease forwards;
     }
-    @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .rep-card:hover {
+      transform: translateY(-5px);
     }
     .rep-card h2 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: #333;
+      margin: 0.5rem 0 0;
+      font-size: 1.3rem;
+      color: #111;
     }
-    .rep-card .stats {
-      font-size: 0.95rem;
-      color: #666;
+    .rep-card .deals {
+      font-size: 1rem;
+      color: #4b5563;
+      margin-top: 0.25rem;
     }
-    .badge {
+    .rep-card .badge {
+      margin-top: 0.6rem;
       display: inline-block;
       padding: 0.3rem 0.6rem;
-      border-radius: 20px;
+      border-radius: 999px;
       font-size: 0.8rem;
       font-weight: bold;
       color: #fff;
-      width: fit-content;
+      animation: pulseBadge 1.6s infinite;
     }
-    .legend { background: #f3c13a; animation: pulse 2s infinite; }
-    .pro { background: #3f87f5; }
-    .rising { background: #45b36b; }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(243, 193, 58, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(243, 193, 58, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(243, 193, 58, 0); }
+    .legend { background-color: #facc15; }
+    .pro { background-color: #3b82f6; }
+    .rising { background-color: #10b981; }
+    .grinding { background-color: #9ca3af; }
+
+    .rank {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
     }
-    #updated {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 2rem;
+    .trend-arrow {
+      font-size: 1.2rem;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .gold { background: linear-gradient(135deg, #facc15, #fde68a); border: 2px solid #f59e0b; }
+    .silver { background: linear-gradient(135deg, #e5e7eb, #d1d5db); border: 2px solid #9ca3af; }
+    .bronze { background: linear-gradient(135deg, #fcd34d, #fbbf24); border: 2px solid #d97706; }
+    .glow { box-shadow: 0 0 12px #facc15, 0 0 24px #facc15; }
+
+    @keyframes pulseBadge { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.85; } }
+    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 600px) {
+      .leaderboard {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+      }
+      .rep-card {
+        padding: 1.25rem;
+      }
+      .rep-card h2 {
+        font-size: 1.1rem;
+      }
+      .rank {
+        font-size: 1.4rem;
+      }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-
-  <div class="leaderboard">
-    <p>Loading leaderboard...</p>
-  </div>
-  <div id="updated"></div>
+  <h1>🏆 Monthly Leaderboard</h1>
+  <div class="leaderboard" id="leaderboard">Loading...</div>
 
   <script>
     async function loadLeaderboard() {
-      const container = document.querySelector('.leaderboard');
-      const updated = document.getElementById('updated');
-
+      const sheetUrl = "https://opensheet.elk.sh/14b6UQtCINY8HQ6zd03PocOkuax1dIcQHmrR_EoYsTHA/Leaderboard";
       try {
-        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://opensheet.elk.sh/10E7jb6myCWLWcegQiyhNutyzGaSxzINSi5X1txCeLYo/Leaderboard');
-        const res = await fetch(proxyUrl);
+        const res = await fetch(sheetUrl);
         const data = await res.json();
+        console.log("Fetched Data:", data);
 
-        container.innerHTML = ''; // Clear loading text
+        const leaderboardDiv = document.getElementById("leaderboard");
+        leaderboardDiv.innerHTML = "";
 
-        let legendTriggered = false;
+        const sorted = data
+          .filter(row => row['Sales Rep'] && !isNaN(parseInt(row['Deals This Month'])))
+          .map((row, i) => {
+            const currentRank = parseInt(row['Current Rank']);
+            const lastRank = parseInt(row['Last Week Rank']);
+            let trend = "⏺️";
+            if (!isNaN(lastRank)) {
+              if (lastRank > currentRank) trend = "🔼";
+              else if (lastRank < currentRank) trend = "🔽";
+            }
+            return {
+              rank: ["🥇", "🥈", "🥉"][i] || `#${i + 1}`,
+              rep: row['Sales Rep'],
+              count: parseInt(row['Deals This Month']) || 0,
+              tier: row['🎖 Tier'] || '',
+              trend: trend
+            };
+          });
 
-        data.forEach((row, index) => {
-          const tier = row['🏆 Tier'] || row['🎖 Tier'] || '';
-          const badgeClass = tier.includes('LEGEND') ? 'legend' :
-                             tier.includes('PRO') ? 'pro' : 'rising';
-          const rankEmoji = row['🏆 Rank'] || `#${index + 1}`;
-          const name = row['🧑 Rep Name'] || row['👨‍💼 Rep Name'] || 'Unnamed';
-          const deals = row['📦 Deals'] || '0';
+        if (sorted.length === 0) {
+          leaderboardDiv.innerHTML = "<p>No deals submitted this month yet.</p>";
+          return;
+        }
 
-          const keys = Object.keys(row);
-          const netKey = keys.find(k => k.toLowerCase().includes('net commission'));
-          const net = netKey ? row[netKey] : '$0';
+        sorted.forEach((item, i) => {
+          const card = document.createElement("div");
+          card.className = "rep-card";
+          card.style.animationDelay = `${i * 0.1}s`;
 
-          const card = document.createElement('div');
-          card.className = 'rep-card';
-          card.style.animationDelay = `${index * 0.1}s`;
-          card.innerHTML = `
-            <h2>${rankEmoji} ${name}</h2>
-            <div class="stats">Deals: ${deals} | Net: ${net}</div>
-            <span class="badge ${badgeClass}">${tier}</span>
-          `;
-          container.appendChild(card);
-
-          if (!legendTriggered && tier.includes('LEGEND')) {
-            legendTriggered = true;
+          if (i === 0) {
+            card.classList.add("gold", "glow");
             confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.4 },
+              startVelocity: 40,
+              ticks: 300
             });
-          }
-        });
+          } else if (i === 1) card.classList.add("silver");
+          else if (i === 2) card.classList.add("bronze");
 
-        const now = new Date();
-        updated.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-      } catch (err) {
-        container.innerHTML = '<p style="color:red">Failed to load leaderboard. Make sure the sheet is published and headers match expected format.</p>';
-        console.error('Fetch error:', err);
+          let badgeClass = "";
+          let emoji = "";
+          if (item.tier === "LEGEND") { badgeClass = "legend"; emoji = "🏆"; }
+          else if (item.tier === "PRO") { badgeClass = "pro"; emoji = "💼"; }
+          else if (item.tier === "RISING") { badgeClass = "rising"; emoji = "🚀"; }
+          else { badgeClass = "grinding"; emoji = "🔄"; }
+
+          card.innerHTML = `
+            <div class="rank">${item.rank} <span class="trend-arrow">${item.trend}</span></div>
+            <h2>${item.rep}</h2>
+            <div class="deals">${item.count} Deal${item.count > 1 ? 's' : ''}</div>
+            <div class="badge ${badgeClass}">${emoji} ${item.tier}</div>
+          `;
+
+          leaderboardDiv.appendChild(card);
+        });
+      } catch (error) {
+        document.getElementById("leaderboard").innerHTML = "<p>Error loading leaderboard data.</p>";
+        console.error(error);
       }
     }
 
-    // Load leaderboard initially and auto-refresh every 60 seconds
     loadLeaderboard();
-    setInterval(loadLeaderboard, 60000);
   </script>
-
 </body>
 </html>
