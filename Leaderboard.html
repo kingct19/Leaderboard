@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#facc15">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f4f4f4;
+      padding-top: 4rem;
+    }
+    nav {
+      width: 100%;
+      background-color: #facc15;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    nav a {
+      text-decoration: none;
+      font-weight: bold;
+      color: #1f2937;
+      font-size: 1rem;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .rep-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .rep-card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    .rep-card .stats {
+      font-size: 0.95rem;
+      color: #666;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #fff;
+      width: fit-content;
+    }
+    .legend { background: #f3c13a; }
+    .pro { background: #3f87f5; }
+    .rising { background: #45b36b; }
+    .grinding { background: #888; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">🏠 Home</a>
+    <a href="leaderboard.html">📊 Leaderboard</a>
+  </nav>
+
+  <p>Loading leaderboard...</p>
+
+  <script>
+    async function loadLeaderboard() {
+      const container = document.body;
+      try {
+        const res = await fetch('https://opensheet.elk.sh/14b6UQtCINY8HQ6zd03PocOkuax1dIcQHmrR_EoYsTHA/Leaderboard');
+        const data = await res.json();
+
+        const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+
+        // Filter for deals only from current month
+        const filtered = data.filter(row => {
+          const date = new Date(row["🗓 Date"]);
+          return date.toLocaleString('default', { month: 'long' }) === currentMonth;
+        });
+
+        if (!filtered.length) {
+          container.innerHTML = "<p>No deals submitted this month.</p>";
+          return;
+        }
+
+        // Sort by deals
+        const sorted = [...filtered].sort((a, b) => (parseInt(b['📦 Deals']) || 0) - (parseInt(a['📦 Deals']) || 0));
+
+        container.innerHTML = ''; // Clear loading text
+
+        sorted.forEach((row, index) => {
+          const badgeClass = row['🎖 Tier'].includes('LEGEND') ? 'legend' :
+                             row['🎖 Tier'].includes('PRO') ? 'pro' :
+                             row['🎖 Tier'].includes('RISING') ? 'rising' : 'grinding';
+          const rankEmoji = ['🥇','🥈','🥉'][index] || `#${index + 1}`;
+
+          const card = `
+            <div class="rep-card">
+              <h2>${rankEmoji} ${row['🧑 Rep Name']}</h2>
+              <div class="stats">Deals: ${row['📦 Deals']}</div>
+              <span class="badge ${badgeClass}">${row['🎖 Tier']}</span>
+            </div>
+          `;
+          container.innerHTML += card;
+        });
+      } catch (err) {
+        container.innerHTML = "<p>Error loading leaderboard data.</p>";
+        console.error(err);
+      }
+    }
+
+    loadLeaderboard();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registered', reg))
+        .catch(err => console.error('Service Worker registration failed', err));
+    }
+  </script>
+</body>
+</html>
