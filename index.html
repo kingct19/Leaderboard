@@ -1,183 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monthly Leaderboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f3f4f6;
-      padding: 2rem;
-      margin: 0;
-    }
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      color: #111827;
-      margin-bottom: 0.5rem;
-    }
-    .leaderboard {
-      display: grid;
-      max-width: 1000px;
-      margin: auto;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-    .rep-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      text-align: center;
-      transform: translateY(20px);
-      opacity: 0;
-      animation: fadeInUp 0.6s ease forwards;
-    }
-    .rep-card:hover {
-      transform: translateY(-5px);
-    }
-    .rep-card h2 {
-      margin: 0.5rem 0 0;
-      font-size: 1.3rem;
-      color: #111;
-    }
-    .rep-card .deals {
-      font-size: 1rem;
-      color: #4b5563;
-      margin-top: 0.25rem;
-    }
-    .rep-card .role {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-top: 0.2rem;
-    }
-    .rep-card .badge {
-      margin-top: 0.6rem;
-      display: inline-block;
-      padding: 0.3rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      color: #fff;
-      animation: pulseBadge 1.6s infinite;
-    }
-    .legend { background-color: #facc15; }
-    .pro { background-color: #3b82f6; }
-    .rising { background-color: #10b981; }
-    .grinding { background-color: #9ca3af; }
+<script>
+  async function loadLeaderboard() {
+    const sheetUrl = "https://opensheet.elk.sh/14b6UQtCINY8HQ6zd03PocOkuax1dIcQHmrR_EoYsTHA/Leaderboard";
+    try {
+      const res = await fetch(sheetUrl);
+      const data = await res.json();
+      console.log("Fetched Data:", data);
 
-    .rank {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-    .trend-arrow {
-      font-size: 1.2rem;
-      margin-left: 0.4rem;
-      vertical-align: middle;
-    }
-    .gold { background: linear-gradient(135deg, #facc15, #fde68a); border: 2px solid #f59e0b; }
-    .silver { background: linear-gradient(135deg, #e5e7eb, #d1d5db); border: 2px solid #9ca3af; }
-    .bronze { background: linear-gradient(135deg, #fcd34d, #fbbf24); border: 2px solid #d97706; }
-    .glow { box-shadow: 0 0 12px #facc15, 0 0 24px #facc15; }
+      const leaderboardDiv = document.getElementById("leaderboard");
+      leaderboardDiv.innerHTML = "";
 
-    @keyframes pulseBadge { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.85; } }
-    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+      const sorted = data
+        .filter(row => row['Name'] && !isNaN(parseInt((row['Deals This Month'] || '').trim())))
+        .map((row, i) => {
+          const currentRank = parseInt((row['Current Rank'] || '').trim());
+          const lastRank = parseInt((row['Last Week Rank'] || '').trim());
+          let trend = "⏺️";
+          if (!isNaN(lastRank)) {
+            if (lastRank > currentRank) trend = "🔼";
+            else if (lastRank < currentRank) trend = "🔽";
+          }
 
-    @media (max-width: 600px) {
-      .leaderboard {
-        grid-template-columns: 1fr;
-        padding: 0 1rem;
-      }
-      .rep-card {
-        padding: 1.25rem;
-      }
-      .rep-card h2 {
-        font-size: 1.1rem;
-      }
-      .rank {
-        font-size: 1.4rem;
-      }
-    }
-  </style>
-</head>
-<body>
-  <h1>🏆 Monthly Leaderboard</h1>
-  <div class="leaderboard" id="leaderboard">Loading...</div>
-
-  <script>
-    async function loadLeaderboard() {
-      const sheetUrl = "https://opensheet.elk.sh/14b6UQtCINY8HQ6zd03PocOkuax1dIcQHmrR_EoYsTHA/Leaderboard";
-      try {
-        const res = await fetch(sheetUrl);
-        const data = await res.json();
-        console.log("Fetched Data:", data);
-
-        const leaderboardDiv = document.getElementById("leaderboard");
-        leaderboardDiv.innerHTML = "";
-
-        const sorted = data
-          .filter(row => row['Name'] && !isNaN(parseInt(row['Deals This Month'])))
-          .map((row, i) => {
-            const currentRank = parseInt(row['Current Rank']);
-            const lastRank = parseInt(row['Last Week Rank']);
-            let trend = "⏺️";
-            if (!isNaN(lastRank)) {
-              if (lastRank > currentRank) trend = "🔼";
-              else if (lastRank < currentRank) trend = "🔽";
-            }
-            return {
-              rank: ["🥇", "🥈", "🥉"][i] || `#${i + 1}`,
-              name: row['Name'],
-              role: row['Role'] || '',
-              count: parseInt(row['Deals This Month']) || 0,
-              tier: row['🎖 Tier'] || '',
-              trend: trend
-            };
-          });
-
-        if (sorted.length === 0) {
-          leaderboardDiv.innerHTML = "<p>No deals submitted this month yet.</p>";
-          return;
-        }
-
-        sorted.forEach((item, i) => {
-          const card = document.createElement("div");
-          card.className = "rep-card";
-          card.style.animationDelay = `${i * 0.1}s`;
-
-          if (i === 0) {
-            card.classList.add("gold", "glow");
-            confetti({ particleCount: 150, spread: 100, origin: { y: 0.4 }, startVelocity: 40, ticks: 300 });
-          } else if (i === 1) card.classList.add("silver");
-          else if (i === 2) card.classList.add("bronze");
-
-          let badgeClass = "";
-          let emoji = "";
-          if (item.tier === "LEGEND") { badgeClass = "legend"; emoji = "🏆"; }
-          else if (item.tier === "PRO") { badgeClass = "pro"; emoji = "💼"; }
-          else if (item.tier === "RISING") { badgeClass = "rising"; emoji = "🚀"; }
-          else { badgeClass = "grinding"; emoji = "🔄"; }
-
-          card.innerHTML = `
-            <div class="rank">${item.rank} <span class="trend-arrow">${item.trend}</span></div>
-            <h2>${item.name}</h2>
-            <div class="role">${item.role}</div>
-            <div class="deals">${item.count} Deal${item.count > 1 ? 's' : ''}</div>
-            <div class="badge ${badgeClass}">${emoji} ${item.tier}</div>
-          `;
-
-          leaderboardDiv.appendChild(card);
+          return {
+            rank: ["🥇", "🥈", "🥉"][i] || `#${i + 1}`,
+            name: row['Name'].trim(),
+            role: (row['Role'] || '').trim(),
+            count: parseInt((row['Deals This Month'] || '').trim()) || 0,
+            tier: (row['🎖 Tier'] || '').trim(),
+            trend: trend
+          };
         });
-      } catch (error) {
-        document.getElementById("leaderboard").innerHTML = "<p>Error loading leaderboard data.</p>";
-        console.error(error);
-      }
-    }
 
-    loadLeaderboard();
-  </script>
-</body>
-</html>
+      if (sorted.length === 0) {
+        leaderboardDiv.innerHTML = "<p>No deals submitted this month yet.</p>";
+        return;
+      }
+
+      sorted.forEach((item, i) => {
+        const card = document.createElement("div");
+        card.className = "rep-card";
+        card.style.animationDelay = `${i * 0.1}s`;
+
+        if (i === 0) {
+          card.classList.add("gold", "glow");
+          confetti({ particleCount: 150, spread: 100, origin: { y: 0.4 }, startVelocity: 40, ticks: 300 });
+        } else if (i === 1) card.classList.add("silver");
+        else if (i === 2) card.classList.add("bronze");
+
+        let badgeClass = "";
+        let emoji = "";
+        if (item.tier === "LEGEND") { badgeClass = "legend"; emoji = "🏆"; }
+        else if (item.tier === "PRO") { badgeClass = "pro"; emoji = "💼"; }
+        else if (item.tier === "RISING") { badgeClass = "rising"; emoji = "🚀"; }
+        else { badgeClass = "grinding"; emoji = "🔄"; }
+
+        card.innerHTML = `
+          <div class="rank">${item.rank} <span class="trend-arrow">${item.trend}</span></div>
+          <h2>${item.name}</h2>
+          <div class="role">${item.role}</div>
+          <div class="deals">${item.count} Deal${item.count > 1 ? 's' : ''}</div>
+          <div class="badge ${badgeClass}">${emoji} ${item.tier}</div>
+        `;
+
+        leaderboardDiv.appendChild(card);
+      });
+    } catch (error) {
+      document.getElementById("leaderboard").innerHTML = "<p>Error loading leaderboard data.</p>";
+      console.error(error);
+    }
+  }
+
+  loadLeaderboard();
+</script>
