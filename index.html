@@ -114,10 +114,10 @@
         leaderboardDiv.innerHTML = "";
 
         const sorted = data
-          .filter(row => row['Name'] && !isNaN(parseInt(row['Deals This Month'])))
+          .filter(row => row['Name'] && !isNaN(parseInt((row['Deals This Month'] || '').trim())))
           .map((row, i) => {
-            const currentRank = parseInt(row['Current Rank']);
-            const lastRank = parseInt(row['Last Week Rank']);
+            const currentRank = parseInt((row['Current Rank'] || '').trim());
+            const lastRank = parseInt((row['Last Week Rank'] || '').trim());
             let trend = "⏺️";
             if (!isNaN(lastRank)) {
               if (lastRank > currentRank) trend = "🔼";
@@ -125,9 +125,9 @@
             }
             return {
               rank: ["🥇", "🥈", "🥉"][i] || `#${i + 1}`,
-              rep: row['Name'],
-              count: parseInt(row['Deals This Month']) || 0,
-              tier: row['🎖 Tier'] || '',
+              rep: row['Name'].trim(),
+              count: parseInt((row['Deals This Month'] || '').trim()) || 0,
+              tier: (row['🎖 Tier'] || '').trim(),
               trend: trend
             };
           });
@@ -180,3 +180,4 @@
   </script>
 </body>
 </html>
+
