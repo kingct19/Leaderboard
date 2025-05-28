@@ -114,7 +114,7 @@
         leaderboardDiv.innerHTML = "";
 
         const sorted = data
-          .filter(row => row['Sales Rep'] && !isNaN(parseInt(row['Deals This Month'])))
+          .filter(row => row['Name'] && !isNaN(parseInt(row['Deals This Month'])))
           .map((row, i) => {
             const currentRank = parseInt(row['Current Rank']);
             const lastRank = parseInt(row['Last Week Rank']);
