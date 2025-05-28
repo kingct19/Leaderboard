@@ -10,7 +10,7 @@
       font-family: 'Poppins', sans-serif;
       background: #f3f4f6;
       padding: 2rem;
-      margin: 0;
+      margin: 1;
     }
     h1 {
       text-align: center;
@@ -20,9 +20,9 @@
     }
     .leaderboard {
       display: grid;
-      max-width: 1000px;
+      max-width: 900px;
       margin: auto;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5rem;
     }
     .rep-card {
@@ -47,11 +47,6 @@
       font-size: 1rem;
       color: #4b5563;
       margin-top: 0.25rem;
-    }
-    .rep-card .role {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-top: 0.2rem;
     }
     .rep-card .badge {
       margin-top: 0.6rem;
@@ -119,22 +114,20 @@
         leaderboardDiv.innerHTML = "";
 
         const sorted = data
-          .filter(row => row['Name'] && !isNaN(parseInt((row['Deals This Month'] || '').trim())))
+          .filter(row => row['Sales Rep'] && !isNaN(parseInt(row['Deals This Month'])))
           .map((row, i) => {
-            const currentRank = parseInt((row['Current Rank'] || '').trim());
-            const lastRank = parseInt((row['Last Week Rank'] || '').trim());
+            const currentRank = parseInt(row['Current Rank']);
+            const lastRank = parseInt(row['Last Week Rank']);
             let trend = "⏺️";
             if (!isNaN(lastRank)) {
               if (lastRank > currentRank) trend = "🔼";
               else if (lastRank < currentRank) trend = "🔽";
             }
-
             return {
               rank: ["🥇", "🥈", "🥉"][i] || `#${i + 1}`,
-              name: row['Name'].trim(),
-              role: (row['Role'] || '').trim(),
-              count: parseInt((row['Deals This Month'] || '').trim()) || 0,
-              tier: (row['🎖 Tier'] || '').trim(),
+              rep: row['Sales Rep'],
+              count: parseInt(row['Deals This Month']) || 0,
+              tier: row['🎖 Tier'] || '',
               trend: trend
             };
           });
@@ -151,7 +144,13 @@
 
           if (i === 0) {
             card.classList.add("gold", "glow");
-            confetti({ particleCount: 150, spread: 100, origin: { y: 0.4 }, startVelocity: 40, ticks: 300 });
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.4 },
+              startVelocity: 40,
+              ticks: 300
+            });
           } else if (i === 1) card.classList.add("silver");
           else if (i === 2) card.classList.add("bronze");
 
@@ -164,8 +163,7 @@
 
           card.innerHTML = `
             <div class="rank">${item.rank} <span class="trend-arrow">${item.trend}</span></div>
-            <h2>${item.name}</h2>
-            <div class="role">${item.role}</div>
+            <h2>${item.rep}</h2>
             <div class="deals">${item.count} Deal${item.count > 1 ? 's' : ''}</div>
             <div class="badge ${badgeClass}">${emoji} ${item.tier}</div>
           `;
@@ -173,7 +171,7 @@
           leaderboardDiv.appendChild(card);
         });
       } catch (error) {
-        document.getElementById("leaderboard").innerHTML = `<p>Error loading leaderboard data: ${error.message}</p>`;
+        document.getElementById("leaderboard").innerHTML = "<p>Error loading leaderboard data.</p>";
         console.error(error);
       }
     }
@@ -182,4 +180,3 @@
   </script>
 </body>
 </html>
-
